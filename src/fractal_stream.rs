@@ -1,33 +1,30 @@
-use rust_decimal::Decimal;
+use crate::complex::ComplexDecimal;
+use std::collections::VecDeque;
 
 struct FractalStream {
-    c_x: Decimal,
-    c_y: Decimal,
-    z_a: Decimal,
-    z_b: Decimal,
+    c: ComplexDecimal,
+    z: ComplexDecimal,
     iter_count: u64,
-    upcoming: Queue??<u8>,
+    upcoming: VecDeque<u8>,
 }
 
 impl FractalStream {
     pub fn new(key: FractalKey) -> Self {
-        c_x, c_y = key.get_c();
-        z_a, z_b = key.get_z0();
+        c = key.get_c();
+        z = key.get_z0();
 
         Self {
-            c_x,
-            c_y,
-            z_a,
-            z_b,
+            c,
+            z,
             iter_count: 0,
-            upcoming: Queue::new(),
+            upcoming: VecDeque::new(),
         }
     }
 
     pub fn next(&mut self) -> u8 {
-        let next_byte = upcoming.pop();
+        let next_byte = upcoming.pop_front();
 
-        if upcoming.len() < 4 {
+        if upcoming.len() < 8 {
             self.next_iteration();
         }
 
@@ -38,5 +35,17 @@ impl FractalStream {
         self.iter_count
     }
 
-    fn next_iteration(&mut self) {}
+    fn next_iteration(&mut self) {
+        let mut new_z = self.z.mult(self.z).add(self.c);
+
+        if new_z.square_modulus >= 4 {
+            new_z = new_z.scale(dec![0.5]);
+        }
+
+        self.z = new_z;
+        self.iter_count += 1;
+        for byte in new_z.bytes() {
+            self.upcoming.push_back(byte);
+        }
+    }
 }
