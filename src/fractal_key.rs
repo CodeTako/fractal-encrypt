@@ -19,9 +19,18 @@ impl FractalKey {
         let mut data = Vec::with_capacity(64);
 
         let mut rng = rand::rng();
-        for d in data.iter_mut() {
-            *d = rng.random::<u8>()
+        let flag_indexes = [24, 25, 49, 50];
+        for i in 0..64 {
+            if flag_indexes.contains(&i) {
+                let flag = if rng.random_bool(0.5) { 1_u8 } else { 0_u8 };
+                data.push(flag);
+            } else {
+                data.push(rng.random::<u8>());
+            }
         }
+
+        println!("{}", data.len());
+        println!("{:?}", data);
 
         Self { data }
     }
@@ -30,14 +39,14 @@ impl FractalKey {
         // for now just the first 24 bytes are the main numbers of c,
         // and then the next 2 bytes are the negative flags.
         // TODO make flags bitvec and not need their own bytes
-        ComplexDecimal::from_u8s(&self.data[0..27])
+        ComplexDecimal::from_u8s(&self.data[0..26])
     }
 
     pub fn get_z0(&self) -> ComplexDecimal {
         // for now just the first 24 bytes are the main numbers of c,
         // and then the next 2 bytes are the negative flags.
         // TODO make flags bitvec and not need their own bytes
-        ComplexDecimal::from_u8s(&self.data[27..54])
+        ComplexDecimal::from_u8s(&self.data[26..52])
     }
 
     pub fn get_extra(&self) -> u8 {

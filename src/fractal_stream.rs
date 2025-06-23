@@ -14,12 +14,17 @@ impl FractalStream {
         let c = key.get_c();
         let z = key.get_z0();
 
-        Self {
+        let mut s = Self {
             c,
             z,
             iter_count: 0,
             upcoming: VecDeque::new(),
-        }
+        };
+
+        println!("New stream with z0 = {} and c = {}", s.z, s.c);
+
+        s.next_iteration();
+        s
     }
 
     pub fn next(&mut self) -> u8 {
@@ -32,6 +37,12 @@ impl FractalStream {
         next_byte
     }
 
+    pub fn next_chunk(&mut self) -> Vec<u8> {
+        self.next_iteration();
+
+        self.upcoming.drain(0..self.upcoming.len()).collect()
+    }
+
     pub fn get_iter_count(&self) -> u64 {
         self.iter_count
     }
@@ -42,8 +53,9 @@ impl FractalStream {
         let mut new_z = self.z.mult(&self.z).add(&self.c);
         println!("{} -> {}", self.iter_count, new_z);
 
-        if new_z.square_modulus() >= dec![4] {
-            new_z = new_z.scale(dec![0.5]);
+        while new_z.square_modulus() >= dec![4] {
+            // new_z = new_z.scale(dec![0.5]);
+            new_z = new_z.to_frac();
             println!("  Scaled -> {}", new_z);
         }
 

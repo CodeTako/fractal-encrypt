@@ -1,10 +1,18 @@
-use rust_decimal::Decimal;
+use std::fmt::Display;
 
-const DEFAULT_SCALE: u32 = 1;
+use rust_decimal::{Decimal, dec};
+
+const DEFAULT_SCALE: u32 = 2;
 
 pub struct ComplexDecimal {
     real: Decimal,
     imaginary: Decimal,
+}
+
+impl Display for ComplexDecimal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} + i{}", self.real, self.imaginary)
+    }
 }
 
 impl ComplexDecimal {
@@ -29,9 +37,12 @@ impl ComplexDecimal {
         let hi_bytes = <[u8; 4]>::try_from(&data[8..12]).unwrap();
         let hi: u32 = u32::from_le_bytes(hi_bytes);
 
-        let negative = data[25] == 1_u8;
+        let negative = data[24] == 1_u8;
 
-        let real = Decimal::from_parts(lo, mid, hi, negative, DEFAULT_SCALE);
+        let mut real = Decimal::from_parts(lo, mid, hi, negative, DEFAULT_SCALE);
+        if real.floor() >= dec![2] || real.floor() <= dec![-2] {
+            real = real.fract();
+        }
 
         let lo_bytes = <[u8; 4]>::try_from(&data[12..16]).unwrap();
         let lo: u32 = u32::from_le_bytes(lo_bytes);
@@ -42,11 +53,20 @@ impl ComplexDecimal {
         let hi_bytes = <[u8; 4]>::try_from(&data[20..24]).unwrap();
         let hi: u32 = u32::from_le_bytes(hi_bytes);
 
-        let negative = data[26] == 1_u8;
+        let negative = data[25] == 1_u8;
 
-        let imaginary = Decimal::from_parts(lo, mid, hi, negative, DEFAULT_SCALE);
+        let mut imaginary = Decimal::from_parts(lo, mid, hi, negative, DEFAULT_SCALE);
+        if imaginary.floor() >= dec![2] || imaginary.floor() <= dec![-2] {
+            imaginary = imaginary.fract();
+        }
 
-        Self { real, imaginary }
+        let mut out = Self { real, imaginary };
+        println!("{}", out);
+        while out.square_modulus() >= dec![4] {
+            out = out.scale(dec![0.5]);
+        }
+
+        out
     }
 
     pub fn add(self, other: &Self) -> Self {
@@ -64,7 +84,14 @@ impl ComplexDecimal {
     }
 
     pub fn square_modulus(&self) -> Decimal {
-        self.real * self.real + self.imaginary + self.imaginary
+        self.real * self.real + self.imaginary * self.imaginary
+    }
+
+    pub fn to_frac(&self) -> Self {
+        Self {
+            real: self.real.fract(),
+            imaginary: self.imaginary.fract(),
+        }
     }
 
     pub fn scale(self, scalar: Decimal) -> Self {
@@ -75,7 +102,8 @@ impl ComplexDecimal {
     }
 
     pub fn bytes(&self) -> Vec<u8> {
-        // TODO
-        vec![]
+        let mut output: Vec<u8> = self.real.mantissa().to_le_bytes().into_iter().collect();
+        output.extend(self.imaginary.mantissa().to_le_bytes());
+        output
     }
 }

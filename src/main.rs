@@ -10,6 +10,7 @@ fn main() {
     let mut stream = FractalStream::new(key);
 
     for i in 0..100 {
-        println!("{}", stream.next());
+        let _ = stream.next_chunk();
+        // println!("{:?}", stream.next_chunk());
     }
 }
