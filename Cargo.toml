@@ -7,3 +7,4 @@ edition = "2024"
 rust_decimal = {version="1.37", features=["macros"]}
 rand = "0.9"
 bitvec = "1.0"
+clap = { version = "4.5.41", features = ["derive"] }

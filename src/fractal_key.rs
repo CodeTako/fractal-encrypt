@@ -1,3 +1,5 @@
+use std::fs;
+
 use crate::complex::ComplexDecimal;
 use rand::Rng;
 
@@ -10,11 +12,6 @@ pub struct FractalKey {
 }
 
 impl FractalKey {
-    // pub fn new(seed: &str) -> Self {
-    //     Self {
-    //         data: seed.to_bytes(),
-    //     }
-    // }
     pub fn new() -> Self {
         let mut data = Vec::with_capacity(64);
 
@@ -35,6 +32,17 @@ impl FractalKey {
         Self { data }
     }
 
+    pub fn from_u8(data: Vec<u8>) -> Self {
+        if data.len() != 64 {
+            panic!(
+                "Tried to make a key from bytes, but had {} bytes instead of the expected 64.",
+                data.len()
+            );
+        }
+
+        Self { data }
+    }
+
     pub fn get_c(&self) -> ComplexDecimal {
         // for now just the first 24 bytes are the main numbers of c,
         // and then the next 2 bytes are the negative flags.
@@ -51,5 +59,9 @@ impl FractalKey {
 
     pub fn get_extra(&self) -> u8 {
         self.data[55]
+    }
+
+    pub fn save(&self, file_path: &str) {
+        fs::write(file_path, &self.data);
     }
 }

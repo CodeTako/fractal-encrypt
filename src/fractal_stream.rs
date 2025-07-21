@@ -10,7 +10,7 @@ pub struct FractalStream {
 }
 
 impl FractalStream {
-    pub fn new(key: FractalKey) -> Self {
+    pub fn new(key: &FractalKey) -> Self {
         let c = key.get_c();
         let z = key.get_z0();
 
@@ -51,7 +51,7 @@ impl FractalStream {
         self.iter_count += 1;
 
         let mut new_z = self.z.mult(&self.z).add(&self.c);
-        println!("{} -> {}", self.iter_count, new_z);
+        // println!("{} -> {}", self.iter_count, new_z);
 
         while new_z.square_modulus() >= dec![4] {
             // new_z = new_z.scale(dec![0.5]);
